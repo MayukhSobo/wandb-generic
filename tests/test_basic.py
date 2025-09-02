@@ -18,7 +18,7 @@ def test_package_import():
 def test_version():
     """Test that version is accessible."""
     import wandb_generic
-    assert wandb_generic.__version__ == "1.0.5"
+    assert wandb_generic.__version__ == "1.0.6"
 
 
 def test_logger_classes_exist():
