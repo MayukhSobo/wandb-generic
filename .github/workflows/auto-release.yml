@@ -35,10 +35,17 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0  # Fetch full history for proper versioning
     
-    - name: Configure git
+    - name: Configure git and sync with latest
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        
+        echo "🔄 Ensuring we have the absolute latest main branch..."
+        git fetch origin main
+        git reset --hard origin/main
+        
+        echo "📍 Current commit: $(git rev-parse HEAD)"
+        echo "📍 Latest commit: $(git rev-parse origin/main)"
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -122,8 +129,28 @@ jobs:
         echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
     
-    - name: Push version bump
+    - name: Pull latest changes and push version bump
       run: |
+        echo "🔄 Pulling latest changes before pushing..."
+        
+        # Try to pull and rebase, handling conflicts if they occur
+        if ! git pull --rebase origin main; then
+          echo "⚠️  Rebase conflicts detected. Attempting to resolve..."
+          
+          # If there are conflicts in version files, prefer our changes
+          if git status --porcelain | grep -E "(pyproject\.toml|src/wandb_generic/__init__\.py)"; then
+            echo "🔧 Resolving version file conflicts by keeping our version bump..."
+            git checkout --ours pyproject.toml src/wandb_generic/__init__.py
+            git add pyproject.toml src/wandb_generic/__init__.py
+            git rebase --continue
+          else
+            echo "❌ Unable to automatically resolve conflicts"
+            git rebase --abort
+            exit 1
+          fi
+        fi
+        
+        echo "🚀 Pushing version bump..."
         git push origin main
     
     - name: Check if release exists
