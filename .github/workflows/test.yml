@@ -1,4 +1,4 @@
-name: Run Tests
+name: Comprehensive Framework Tests
 
 on:
   push:
@@ -7,12 +7,13 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  # Test core functionality without optional dependencies
+  test-core:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
-
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -21,15 +22,141 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install dependencies
+    - name: Install core dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
     
-    - name: Run tests
+    - name: Run basic tests
       run: |
-        python -m pytest tests/ -v
+        python -m pytest tests/test_basic.py -v
     
-    - name: Test package import
+    - name: Run generic domain tests (no ML dependencies required)
       run: |
-        python -c "import wandb_generic; print(f'wandb-generic {wandb_generic.__version__} imported successfully')" 
+        python -m pytest tests/test_generic_domains.py tests/test_financial.py -v
+    
+    - name: Test core package import
+      run: |
+        python -c "import wandb_generic; print(f'wandb-generic {wandb_generic.__version__} imported successfully')"
+
+  # Test PyTorch integration
+  test-pytorch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies with PyTorch
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev,torch]
+    
+    - name: Run PyTorch tests
+      run: |
+        python -m pytest tests/test_pytorch.py -v
+    
+    - name: Test PyTorch integration
+      run: |
+        python -c "import wandb_generic, torch; print('PyTorch integration verified')"
+
+  # Test scikit-learn integration  
+  test-sklearn:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies with scikit-learn
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+        pip install scikit-learn>=1.0.0
+    
+    - name: Run scikit-learn tests
+      run: |
+        python -m pytest tests/test_sklearn.py -v
+    
+    - name: Test scikit-learn integration
+      run: |
+        python -c "import wandb_generic, sklearn; print('scikit-learn integration verified')"
+
+  # Test TensorFlow integration
+  test-tensorflow:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, "3.10", "3.11", "3.12"]  # TF requires Python 3.9+
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies with TensorFlow
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev,tensorflow]
+    
+    - name: Run TensorFlow tests
+      run: |
+        python -m pytest tests/test_tensorflow.py -v
+    
+    - name: Test TensorFlow integration
+      run: |
+        python -c "import wandb_generic, tensorflow as tf; print('TensorFlow integration verified')"
+
+  # Test with all frameworks combined (integration test)
+  test-all-frameworks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]  # Test on subset for performance
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install all dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev,all]
+        pip install scikit-learn>=1.0.0
+    
+    - name: Run all framework tests
+      run: |
+        python -m pytest tests/ -v --tb=short
+    
+    - name: Verify all integrations
+      run: |
+        python -c "
+        import wandb_generic, torch, sklearn, tensorflow as tf
+        print(f'ALL INTEGRATIONS VERIFIED:')
+        print(f'- wandb-generic: {wandb_generic.__version__}')  
+        print(f'- PyTorch: {torch.__version__}')
+        print(f'- scikit-learn: {sklearn.__version__}')
+        print(f'- TensorFlow: {tf.__version__}')
+        print('🎉 Generic logger works with ALL frameworks!')
+        " 
