@@ -2,10 +2,11 @@
 
 [![PyPI version](https://badge.fury.io/py/wandb-generic.svg)](https://badge.fury.io/py/wandb-generic)
 [![Python](https://img.shields.io/pypi/pyversions/wandb-generic.svg)](https://pypi.org/project/wandb-generic/)
-[![Downloads](https://static.pepy.tech/badge/wandb-generic)](https://pepy.tech/project/wandb-generic)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/wandb-generic)](https://pypi.org/project/wandb-generic/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/MayukhSobo/wandb-generic/actions/workflows/test.yml/badge.svg)](https://github.com/MayukhSobo/wandb-generic/actions/workflows/test.yml)
-[![CodeQL](https://github.com/MayukhSobo/wandb-generic/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/MayukhSobo/wandb-generic/actions/workflows/github-code-scanning/codeql)
+[![GitHub issues](https://img.shields.io/github/issues/MayukhSobo/wandb-generic)](https://github.com/MayukhSobo/wandb-generic/issues)
+[![GitHub stars](https://img.shields.io/github/stars/MayukhSobo/wandb-generic)](https://github.com/MayukhSobo/wandb-generic/stargazers)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A **truly generic** and professional Python package that brings Weights & Biases experiment tracking to any ML/DL library or long-running function. No more manual logging - just specify what variables you want to track in a config file and let the magic happen!
