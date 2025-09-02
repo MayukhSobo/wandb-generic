@@ -233,7 +233,7 @@ jobs:
         
         echo "✅ Release created successfully!"
         echo "🔍 Verifying release status..."
-        gh release view ${{ steps.get_version.outputs.tag }} --json tagName,isDraft,isPublished
+        gh release view ${{ steps.get_version.outputs.tag }} --json tagName,isDraft,publishedAt
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
