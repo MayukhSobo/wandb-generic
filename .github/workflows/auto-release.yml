@@ -1,0 +1,122 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["Comprehensive Framework Tests"]
+    types:
+      - completed
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for proper versioning
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+    
+    - name: Get current version
+      id: get_version
+      run: |
+        VERSION=$(python -c "import wandb_generic; print(wandb_generic.__version__)")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Check if release exists
+      id: check_release
+      run: |
+        if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Get latest commits since last release
+      id: get_commits
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        # Get the last release tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          # No previous tags, get all commits
+          COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+        else
+          # Get commits since last tag
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+        fi
+        
+        # Generate release notes
+        cat << EOF > release_notes.md
+        # 🚀 wandb-generic v${{ steps.get_version.outputs.version }}
+        
+        ## ✨ What's New
+        
+        $COMMITS
+        
+        ## 🎯 Framework Support
+        
+        This release supports:
+        - ✅ **PyTorch** - Full tensor and model support
+        - ✅ **TensorFlow/Keras** - Sequential and functional API
+        - ✅ **scikit-learn** - All estimators and pipelines  
+        - ✅ **Financial Analysis** - Portfolio tracking, metrics
+        - ✅ **Physics Simulations** - Scientific computing
+        - ✅ **Data Processing** - ETL pipelines and batch processing
+        - ✅ **Optimization** - Any optimization algorithms
+        - ✅ **A/B Testing** - Statistical analysis workflows
+        - ✅ **Generic Functions** - ANY Python function!
+        
+        ## 📦 Installation
+        
+        \`\`\`bash
+        pip install wandb-generic==${{ steps.get_version.outputs.version }}
+        \`\`\`
+        
+        ## 🔗 Links
+        
+        - 📖 [Documentation](https://github.com/MayukhSobo/wandb-generic#readme)  
+        - 🐛 [Issues](https://github.com/MayukhSobo/wandb-generic/issues)
+        - 💬 [Discussions](https://github.com/MayukhSobo/wandb-generic/discussions)
+        
+        ---
+        
+        **Full Changelog**: https://github.com/MayukhSobo/wandb-generic/compare/${LAST_TAG}...v${{ steps.get_version.outputs.version }}
+        EOF
+    
+    - name: Create Release
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        gh release create ${{ steps.get_version.outputs.tag }} \
+          --title "Release ${{ steps.get_version.outputs.tag }}" \
+          --notes-file release_notes.md \
+          --latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Release Summary
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        echo "🎉 Created release ${{ steps.get_version.outputs.tag }}"
+        echo "📦 PyPI publish will trigger automatically"
+        echo "🚀 Users can install with: pip install wandb-generic==${{ steps.get_version.outputs.version }}"
+    
+    - name: Skip Release (Already Exists)
+      if: steps.check_release.outputs.exists == 'true'
+      run: |
+        echo "ℹ️ Release ${{ steps.get_version.outputs.tag }} already exists"
+        echo "💡 Update version in pyproject.toml and src/wandb_generic/__init__.py to create new release" 

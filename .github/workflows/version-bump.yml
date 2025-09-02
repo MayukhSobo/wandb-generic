@@ -1,0 +1,100 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**' 
+      - 'pyproject.toml'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip version]') }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install bump2version
+      run: pip install bump2version
+    
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Get current version
+      id: current_version
+      run: |
+        VERSION=$(python -c "import sys; sys.path.insert(0, 'src'); import wandb_generic; print(wandb_generic.__version__)")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Determine version bump type
+      id: bump_type
+      run: |
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        
+        if [[ $COMMIT_MSG == *"BREAKING CHANGE"* ]] || [[ $COMMIT_MSG == *"feat!"* ]]; then
+          echo "bump=major" >> $GITHUB_OUTPUT
+          echo "🚨 Major version bump (breaking changes detected)"
+        elif [[ $COMMIT_MSG == feat* ]] || [[ $COMMIT_MSG == *"feat("* ]]; then
+          echo "bump=minor" >> $GITHUB_OUTPUT  
+          echo "✨ Minor version bump (new features)"
+        elif [[ $COMMIT_MSG == fix* ]] || [[ $COMMIT_MSG == *"fix("* ]] || [[ $COMMIT_MSG == *"bug"* ]]; then
+          echo "bump=patch" >> $GITHUB_OUTPUT
+          echo "🐛 Patch version bump (bug fixes)"
+        elif [[ $COMMIT_MSG == *"Add comprehensive"* ]] || [[ $COMMIT_MSG == *"comprehensive"* ]]; then
+          echo "bump=minor" >> $GITHUB_OUTPUT
+          echo "🧪 Minor version bump (comprehensive improvements)"
+        else
+          echo "bump=patch" >> $GITHUB_OUTPUT
+          echo "🔧 Patch version bump (other changes)"
+        fi
+    
+    - name: Create .bumpversion.cfg
+      run: |
+        cat > .bumpversion.cfg << EOF
+        [bumpversion]
+        current_version = ${{ steps.current_version.outputs.version }}
+        commit = True
+        tag = False
+        
+        [bumpversion:file:pyproject.toml]
+        search = version = "{current_version}"
+        replace = version = "{new_version}"
+        
+        [bumpversion:file:src/wandb_generic/__init__.py]
+        search = __version__ = "{current_version}"
+        replace = __version__ = "{new_version}"
+        EOF
+    
+    - name: Bump version
+      run: |
+        bump2version ${{ steps.bump_type.outputs.bump }} --verbose
+    
+    - name: Get new version
+      id: new_version
+      run: |
+        NEW_VERSION=$(python -c "import sys; sys.path.insert(0, 'src'); import wandb_generic; print(wandb_generic.__version__)")
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Push changes
+      run: |
+        git push origin main
+    
+    - name: Summary
+      run: |
+        echo "🎉 Version bumped: ${{ steps.current_version.outputs.version }} → ${{ steps.new_version.outputs.version }}"
+        echo "📝 Commit: ${{ github.event.head_commit.message }}"
+        echo "🔄 Bump type: ${{ steps.bump_type.outputs.bump }}"
+        echo "🚀 Auto-release will be triggered after tests pass" 
