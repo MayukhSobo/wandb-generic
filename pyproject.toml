@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A truly generic Python package for Weights & Biases integration with any ML/DL library or long-running function."
 readme = "README.md"
-license = "MIT"
+license = {file = "LICENSE"}
 requires-python = ">=3.8"
 keywords = [
     "wandb", "weights-and-biases", "machine-learning", "deep-learning", 
