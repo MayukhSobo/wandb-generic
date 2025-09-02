@@ -90,7 +90,7 @@ jobs:
         cat > .bumpversion.cfg << EOF
         [bumpversion]
         current_version = ${{ steps.current_version.outputs.version }}
-        commit = True
+        commit = False
         tag = False
         
         [bumpversion:file:pyproject.toml]
@@ -104,7 +104,12 @@ jobs:
     
     - name: Bump version
       run: |
-        bump2version ${{ steps.bump_type.outputs.bump }} --verbose
+        bump2version ${{ steps.bump_type.outputs.bump }} --verbose --no-commit --no-tag
+    
+    - name: Commit version bump
+      run: |
+        git add pyproject.toml src/wandb_generic/__init__.py
+        git commit -m "chore: bump version to $(python -c "import wandb_generic; print(wandb_generic.__version__)")"
     
     - name: Get new version
       id: get_version
