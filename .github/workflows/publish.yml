@@ -2,7 +2,7 @@ name: Publish Python Package
 
 on:
   release:
-    types: [published]
+    types: [published, created]  # Trigger on both published and created events
 
 jobs:
   deploy:
@@ -12,6 +12,14 @@ jobs:
       id-token: write  # Required for PyPI trusted publishing
     
     steps:
+    - name: Debug release info
+      run: |
+        echo "Release tag: ${{ github.event.release.tag_name }}"
+        echo "Release name: ${{ github.event.release.name }}"
+        echo "Release event: ${{ github.event.action }}"
+        echo "Is prerelease: ${{ github.event.release.prerelease }}"
+        echo "Is draft: ${{ github.event.release.draft }}"
+    
     - uses: actions/checkout@v4
     
     - name: Set up Python
@@ -32,3 +40,9 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+    
+    - name: Publish success notification
+      run: |
+        echo "🎉 Successfully published wandb-generic ${{ github.event.release.tag_name }} to PyPI!"
+        echo "📦 Install with: pip install wandb-generic==${{ github.event.release.tag_name }}"
+        echo "🔗 PyPI: https://pypi.org/project/wandb-generic/"
