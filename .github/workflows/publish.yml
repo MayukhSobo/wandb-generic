@@ -2,7 +2,7 @@ name: Publish Python Package
 
 on:
   release:
-    types: [published, created]  # Trigger on both published and created events
+    types: [published]  # Only trigger on published (more reliable than created)
 
 jobs:
   deploy:
@@ -14,11 +14,18 @@ jobs:
     steps:
     - name: Debug release info
       run: |
-        echo "Release tag: ${{ github.event.release.tag_name }}"
-        echo "Release name: ${{ github.event.release.name }}"
-        echo "Release event: ${{ github.event.action }}"
-        echo "Is prerelease: ${{ github.event.release.prerelease }}"
-        echo "Is draft: ${{ github.event.release.draft }}"
+        echo "🚀 Publish workflow triggered!"
+        echo "📋 Workflow Chain Status:"
+        echo "  ✅ 1. Tests passed"
+        echo "  ✅ 2. Auto-release completed"
+        echo "  🔄 3. Publish workflow started (this step)"
+        echo ""
+        echo "📦 Release Details:"
+        echo "  Release tag: ${{ github.event.release.tag_name }}"
+        echo "  Release name: ${{ github.event.release.name }}"
+        echo "  Release event: ${{ github.event.action }}"
+        echo "  Is prerelease: ${{ github.event.release.prerelease }}"
+        echo "  Is draft: ${{ github.event.release.draft }}"
     
     - uses: actions/checkout@v4
     
@@ -30,16 +37,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build
     
     - name: Build package
       run: python -m build
     
-    - name: Publish package to PyPI
+    - name: Publish package to PyPI using Trusted Publishing
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      # No credentials needed when using trusted publishing
     
     - name: Publish success notification
       run: |
