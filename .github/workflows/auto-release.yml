@@ -20,6 +20,9 @@ on:
 jobs:
   auto-version-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to push commits and create releases
+      actions: read    # Required to read workflow runs
     if: |
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
       (github.event_name == 'workflow_dispatch')
