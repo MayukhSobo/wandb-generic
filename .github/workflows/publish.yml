@@ -83,9 +83,12 @@ jobs:
     - name: Build package
       run: python -m build
     
-    - name: Publish package to PyPI using Trusted Publishing
+    - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      # No credentials needed when using trusted publishing
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        # Remove the above and use trusted publishing once configured on PyPI
     
     - name: Publish success notification
       run: |
