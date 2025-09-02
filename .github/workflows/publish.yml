@@ -16,9 +16,24 @@ jobs:
     # Run if triggered by a published release OR if auto-release workflow completed successfully
     if: |
       (github.event_name == 'release' && github.event.action == 'published') ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.name == 'Auto Version Bump and Release')
     
     steps:
+    - name: Debug workflow trigger
+      run: |
+        echo "🔍 Publish workflow trigger debugging:"
+        echo "  Event name: ${{ github.event_name }}"
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "  Release action: ${{ github.event.action }}"
+          echo "  Release tag: ${{ github.event.release.tag_name }}"
+          echo "  Release draft: ${{ github.event.release.draft }}"
+        elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+          echo "  Workflow name: ${{ github.event.workflow_run.name }}"
+          echo "  Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "  Workflow status: ${{ github.event.workflow_run.status }}"
+          echo "  Head branch: ${{ github.event.workflow_run.head_branch }}"
+        fi
+    
     - name: Get release information
       id: release_info
       run: |
@@ -33,6 +48,7 @@ jobs:
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Debug release info
       run: |

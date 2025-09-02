@@ -267,6 +267,9 @@ jobs:
           echo "  - isDraft: $IS_DRAFT"
           echo "  - publishedAt: $PUBLISHED_AT"
         fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Release Summary
       if: steps.check_release.outputs.exists == 'false'
