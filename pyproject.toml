@@ -55,11 +55,11 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/thedatageek/wandb-generic"
-Documentation = "https://github.com/thedatageek/wandb-generic#readme"
-Repository = "https://github.com/thedatageek/wandb-generic"
-"Bug Tracker" = "https://github.com/thedatageek/wandb-generic/issues"
-Changelog = "https://github.com/thedatageek/wandb-generic/releases"
+Homepage = "https://github.com/MayukhSobo/wandb-generic"
+Documentation = "https://github.com/MayukhSobo/wandb-generic#readme"
+Repository = "https://github.com/MayukhSobo/wandb-generic"
+"Bug Tracker" = "https://github.com/MayukhSobo/wandb-generic/issues"
+Changelog = "https://github.com/MayukhSobo/wandb-generic/releases"
 
 [tool.setuptools.packages.find]
 where = ["src"]
