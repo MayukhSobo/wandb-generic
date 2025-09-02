@@ -224,25 +224,49 @@ jobs:
       if: steps.check_release.outputs.exists == 'false'
       run: |
         echo "Creating release ${{ steps.get_version.outputs.tag }}..."
+        
+        # Create release as draft first
         gh release create ${{ steps.get_version.outputs.tag }} \
           --title "Release ${{ steps.get_version.outputs.tag }}" \
           --notes-file release_notes.md \
-          --latest \
-          --draft=false \
+          --draft \
           --verify-tag=false
         
-        echo "✅ Release created successfully!"
+        echo "📝 Draft release created, now publishing..."
+        
+        # Explicitly publish the release to trigger webhook
+        gh release edit ${{ steps.get_version.outputs.tag }} \
+          --draft=false \
+          --latest
+        
+        echo "✅ Release published successfully!"
         echo "🔍 Verifying release status..."
         gh release view ${{ steps.get_version.outputs.tag }} --json tagName,isDraft,publishedAt
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Wait for release to be fully created
+    - name: Wait and verify webhook trigger
       if: steps.check_release.outputs.exists == 'false'
       run: |
-        echo "Waiting 10 seconds for release to be fully processed..."
-        sleep 10
-        echo "✅ Release should now trigger PyPI publishing workflow"
+        echo "⏳ Waiting 15 seconds for release webhook to be processed by GitHub..."
+        sleep 15
+        
+        echo "🔍 Final release verification..."
+        RELEASE_INFO=$(gh release view ${{ steps.get_version.outputs.tag }} --json isDraft,publishedAt,url)
+        echo "Release info: $RELEASE_INFO"
+        
+        # Check if the release was properly published
+        IS_DRAFT=$(echo "$RELEASE_INFO" | jq -r '.isDraft')
+        PUBLISHED_AT=$(echo "$RELEASE_INFO" | jq -r '.publishedAt')
+        
+        if [ "$IS_DRAFT" = "false" ] && [ "$PUBLISHED_AT" != "null" ]; then
+          echo "✅ Release properly published at: $PUBLISHED_AT"
+          echo "🚀 This should trigger the 'Publish Python Package' workflow"
+        else
+          echo "⚠️  Release may not be properly published:"
+          echo "  - isDraft: $IS_DRAFT"
+          echo "  - publishedAt: $PUBLISHED_AT"
+        fi
     
     - name: Release Summary
       if: steps.check_release.outputs.exists == 'false'

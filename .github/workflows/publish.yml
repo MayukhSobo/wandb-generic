@@ -2,7 +2,10 @@ name: Publish Python Package
 
 on:
   release:
-    types: [published]  # Only trigger on published (more reliable than created)
+    types: [published]  # Only trigger on published events
+  workflow_run:
+    workflows: ["Auto Version Bump and Release"]  
+    types: [completed]
 
 jobs:
   deploy:
@@ -10,8 +13,27 @@ jobs:
     permissions:
       contents: read  # Required to checkout code
       id-token: write  # Required for PyPI trusted publishing
+    # Run if triggered by a published release OR if auto-release workflow completed successfully
+    if: |
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     
     steps:
+    - name: Get release information
+      id: release_info
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "Triggered by release event: ${{ github.event.release.tag_name }}"
+        else
+          # Get the latest release when triggered by workflow_run
+          LATEST_RELEASE=$(gh api repos/MayukhSobo/wandb-generic/releases/latest --jq '.tag_name')
+          echo "tag_name=$LATEST_RELEASE" >> $GITHUB_OUTPUT
+          echo "Triggered by workflow_run, latest release: $LATEST_RELEASE"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Debug release info
       run: |
         echo "🚀 Publish workflow triggered!"
@@ -21,11 +43,14 @@ jobs:
         echo "  🔄 3. Publish workflow started (this step)"
         echo ""
         echo "📦 Release Details:"
-        echo "  Release tag: ${{ github.event.release.tag_name }}"
-        echo "  Release name: ${{ github.event.release.name }}"
-        echo "  Release event: ${{ github.event.action }}"
-        echo "  Is prerelease: ${{ github.event.release.prerelease }}"
-        echo "  Is draft: ${{ github.event.release.draft }}"
+        echo "  Trigger event: ${{ github.event_name }}"
+        echo "  Release tag: ${{ steps.release_info.outputs.tag_name }}"
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "  Release name: ${{ github.event.release.name }}"
+          echo "  Release event: ${{ github.event.action }}"
+          echo "  Is prerelease: ${{ github.event.release.prerelease }}"
+          echo "  Is draft: ${{ github.event.release.draft }}"
+        fi
     
     - uses: actions/checkout@v4
     
@@ -48,6 +73,14 @@ jobs:
     
     - name: Publish success notification
       run: |
-        echo "🎉 Successfully published wandb-generic ${{ github.event.release.tag_name }} to PyPI!"
-        echo "📦 Install with: pip install wandb-generic==${{ github.event.release.tag_name }}"
+        TAG_NAME="${{ steps.release_info.outputs.tag_name }}"
+        VERSION="${TAG_NAME#v}"  # Remove 'v' prefix to get version number
+        
+        echo "🎉 Successfully published wandb-generic $TAG_NAME to PyPI!"
+        echo "📦 Install with: pip install wandb-generic==$VERSION"
         echo "🔗 PyPI: https://pypi.org/project/wandb-generic/"
+        echo ""
+        echo "✅ Workflow Chain Complete:"
+        echo "  ✅ 1. Tests passed"
+        echo "  ✅ 2. Auto-release completed"  
+        echo "  ✅ 3. Package published to PyPI"
