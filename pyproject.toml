@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "wandb-generic"
 version = "1.0.12"
 authors = [
-    { name="WandB Generic Contributors", email="hello@wandb-generic.dev" },
+    { name="Mayukh Sobo", email="mayukh2012@hotmail.com" },
 ]
 description = "A truly generic Python package for Weights & Biases integration with any ML/DL library or long-running function."
 readme = "README.md"

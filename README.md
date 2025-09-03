@@ -1,8 +1,9 @@
 # WandB Generic Logger 🚀
 
-[![PyPI version](https://badge.fury.io/py/wandb-generic.svg)](https://badge.fury.io/py/wandb-generic)
+[![PyPI version](https://img.shields.io/pypi/v/wandb-generic.svg)](https://pypi.org/project/wandb-generic/)
 [![Python](https://img.shields.io/pypi/pyversions/wandb-generic.svg)](https://pypi.org/project/wandb-generic/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/wandb-generic)](https://pypi.org/project/wandb-generic/)
+[![PyPI - Status](https://img.shields.io/pypi/status/wandb-generic)](https://pypi.org/project/wandb-generic/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/MayukhSobo/wandb-generic/actions/workflows/test.yml/badge.svg)](https://github.com/MayukhSobo/wandb-generic/actions/workflows/test.yml)
 [![GitHub issues](https://img.shields.io/github/issues/MayukhSobo/wandb-generic)](https://github.com/MayukhSobo/wandb-generic/issues)
